@@ -11,17 +11,8 @@
   <button onclick="shortenUrl()">Shorten</button>
   <p id="shorten-message"></p>
 
-  <h2>User Activity</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Original Link</th>
-        <th>Shortened Link</th>
-        <th>Views</th>
-        <th>Created Time</th>
-      </tr>
-    </thead>
-    <tbody id="activity-table"></tbody>
-  </table>
+  <h3>Redirect to Original Link</h3>
+  <input type="text" id="hashed-link" placeholder="Enter hashed link">
+  <button onclick="redirect()">Redirect</button>
 </body>
 </html>

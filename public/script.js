@@ -126,3 +126,24 @@ function shortenUrl() {
       console.error('Error occurred during URL shortening:', error);
     });
 }
+function redirect() {
+  var hashedLink = document.getElementById('hashed-link').value;
+
+  // Send a GET request to the backend to retrieve the original link
+  fetch('/api/redirect/' + hashedLink)
+    .then(response => response.json())
+    .then(data => {
+      // Handle the response from the backend
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        // Redirect to the original link
+        window.location.href = data.originalLink;
+      }
+    })
+    .catch(error => {
+      console.error('Error occurred during redirection:', error);
+    });
+}
+
+

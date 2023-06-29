@@ -3,9 +3,13 @@ const path = require('path');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Create a MySQL connection
 const connection = mysql.createConnection({
@@ -193,27 +197,51 @@ app.post('/api/shorten', authenticateToken, (req, res) => {
         return res.status(500).json({ error: 'An error occurred during URL shortening.' });
       }
 
-      const shortenedLink = 'localhost/' + shortHash; // Construct the shortened link using your domain
+      const shortenedLink = 'localhost:3000/' + shortHash;
 
       res.json({ shortenedLink });
     });
   });
 });
 
-// Generate a short hash for the URL (example implementation)
+// Generate a short hash for the URL
 function generateShortHash(url) {
-  // Implement your shortening algorithm here
-  // You can use libraries like shortid, nanoid, or custom logic to generate a short hash
-
-  // Example: Generate a random 6-character alphanumeric hash
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let shortHash = '';
-  for (let i = 0; i < 6; i++) {
-    shortHash += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-
-  return shortHash;
+  const uniqueId = uuidv4(); // Generate a unique identifier
+  const hash = crypto.createHash('md5').update(url + uniqueId).digest('hex');
+  return hash.substring(0, 8); // Return the first 8 characters of the hash
 }
+
+// Redirect to the original URL when accessing the shortened link
+app.get('/api/redirect/:hashedLink', (req, res) => {
+  const shortHash = req.params.hashedLink;
+
+  // Retrieve the original URL from the database based on the short hash
+  const selectLinkQuery = 'SELECT url FROM links WHERE short_hash = ?';
+  connection.query(selectLinkQuery, [shortHash], (err, rows) => {
+    if (err) {
+      console.error('Error executing SQL query:', err);
+      return res.status(500).json({ error: 'An error occurred while retrieving the URL.' });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Shortened link not found.' });
+    }
+
+    const originalLink = rows[0].url;
+
+    // Increment the number of views for the shortened link in the database
+    const incrementViewsQuery = 'UPDATE links SET views = views + 1 WHERE short_hash = ?';
+    connection.query(incrementViewsQuery, [shortHash], (err) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        // Continue the redirect even if there was an error incrementing views
+      }
+
+      res.json({ originalLink: originalLink });
+    });
+  });
+});
+
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
