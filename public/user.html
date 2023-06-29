@@ -1,0 +1,27 @@
+<!-- user.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Link Shortener</title>
+</head>
+<body>
+  <script src="script.js"></script>
+  <h2>Link Shortener</h2>
+  <input type="text" id="url" placeholder="Enter URL">
+  <button onclick="shortenUrl()">Shorten</button>
+  <p id="shorten-message"></p>
+
+  <h2>User Activity</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Original Link</th>
+        <th>Shortened Link</th>
+        <th>Views</th>
+        <th>Created Time</th>
+      </tr>
+    </thead>
+    <tbody id="activity-table"></tbody>
+  </table>
+</body>
+</html>
