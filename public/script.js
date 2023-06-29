@@ -98,42 +98,31 @@ function loginUser() {
 function shortenUrl() {
   var url = document.getElementById('url').value;
 
-  // Send URL to the backend to get the shortened link (not implemented in this example)
-  // Assume there's a backend API endpoint for creating a shortened link
-  // Example: POST /api/shorten
-  // You can use AJAX, fetch, or any other method to send the request
-  // Handle the response from the backend accordingly (e.g., display the shortened link)
-}
+  // Create a request body object
+  var requestBody = {
+    url: url
+  };
 
-// Fetch user activity when the user.html page is loaded
-window.addEventListener('load', () => {
-  const token = localStorage.getItem('token');
-
-  // Send a GET request to the backend API endpoint for fetching user activity
-  fetch('/api/user/activity', {
+  // Send a POST request to the backend URL shortening endpoint
+  fetch('/api/shorten', {
+    method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`
-    }
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('token') // Include the JWT token in the request headers
+    },
+    body: JSON.stringify(requestBody)
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Error occurred while fetching user activity: ' + response.status);
-      }
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
       // Handle the response from the backend
-      // Display user activity on the page
-      var activityTable = document.getElementById('activityTable');
-      data.forEach(activity => {
-        var row = activityTable.insertRow();
-        var cell = row.insertCell();
-        cell.appendChild(document.createTextNode(activity.activity_name));
-      });
+      if (data.error) {
+        alert('URL shortening failed: ' + data.error);
+      } else {
+        // Display the shortened link
+        document.getElementById('shorten-message').innerHTML = 'Shortened Link: ' + data.shortenedLink;
+      }
     })
     .catch(error => {
-      console.error('Error occurred while fetching user activity:', error);
-      // Handle the error and display an appropriate message to the user
-      alert('Error occurred while fetching user activity: ' + error.message);
+      console.error('Error occurred during URL shortening:', error);
     });
-});
+}

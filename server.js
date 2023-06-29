@@ -44,22 +44,24 @@ connection.connect((err) => {
     console.log('Created the users table');
   });
 
-  // Create the user_activity table if it doesn't exist
-  const createUserActivityTableQuery = `
-    CREATE TABLE IF NOT EXISTS user_activity (
+  // Create the links table if it doesn't exist
+  const createLinksTableQuery = `
+    CREATE TABLE IF NOT EXISTS links (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      activity_name VARCHAR(255) NOT NULL,
+      url TEXT NOT NULL,
+      short_hash VARCHAR(255) NOT NULL,
+      views INT NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      user_id INT,
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `;
-  connection.query(createUserActivityTableQuery, (err) => {
+  connection.query(createLinksTableQuery, (err) => {
     if (err) {
-      console.error('Error creating the user_activity table:', err);
+      console.error('Error creating the links table:', err);
       process.exit(1);
     }
-    console.log('Created the user_activity table');
+    console.log('Created the links table');
   });
 });
 
@@ -162,20 +164,56 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// Retrieve user activity
-app.get('/api/user/activity', authenticateToken, (req, res) => {
-  const username = req.user.username;
+// Shorten a URL and save it in the database
+app.post('/api/shorten', authenticateToken, (req, res) => {
+  const { url } = req.body;
+  const { username } = req.user; // Get the username from the authenticated user
 
-  const getActivityQuery = 'SELECT * FROM user_activity WHERE user_id IN (SELECT id FROM users WHERE username = ?)';
-  connection.query(getActivityQuery, [username], (err, rows) => {
+  // Generate a short hash for the URL (you can use any shortening algorithm of your choice)
+  const shortHash = generateShortHash(url);
+
+  // Save the shortened link, creation date, and number of views in the database
+  const insertLinkQuery = 'INSERT INTO links (url, short_hash, views, created_at, user_id) VALUES (?, ?, ?, ?, ?)';
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' '); // Get the current date and time in the format 'YYYY-MM-DD HH:MM:SS'
+  const views = 0; // Initial number of views is 0
+
+  // Get the user ID based on the username
+  const getUserIdQuery = 'SELECT id FROM users WHERE username = ?';
+  connection.query(getUserIdQuery, [username], (err, rows) => {
     if (err) {
       console.error('Error executing SQL query:', err);
-      return res.status(500).json({ error: 'An error occurred while fetching user activity.' });
+      return res.status(500).json({ error: 'An error occurred during URL shortening.' });
     }
 
-    res.json(rows);
+    const userId = rows[0].id;
+
+    connection.query(insertLinkQuery, [url, shortHash, views, currentDate, userId], (err) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).json({ error: 'An error occurred during URL shortening.' });
+      }
+
+      const shortenedLink = 'localhost/' + shortHash; // Construct the shortened link using your domain
+
+      res.json({ shortenedLink });
+    });
   });
 });
+
+// Generate a short hash for the URL (example implementation)
+function generateShortHash(url) {
+  // Implement your shortening algorithm here
+  // You can use libraries like shortid, nanoid, or custom logic to generate a short hash
+
+  // Example: Generate a random 6-character alphanumeric hash
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let shortHash = '';
+  for (let i = 0; i < 6; i++) {
+    shortHash += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  return shortHash;
+}
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
