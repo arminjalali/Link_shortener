@@ -293,6 +293,31 @@ app.post('/api/user-info', (req, res) => {
   });
 });
 
+// Endpoint to retrieve the URL for a hashed link
+app.post('/api/retrieve-url', (req, res) => {
+  const { hashedLink } = req.body;
+
+  // Retrieve the URL for the hashed link from the 'links' table
+  const query = `
+    SELECT url
+    FROM links
+    WHERE short_hash = ?;
+  `;
+
+  connection.query(query, [hashedLink], (error, results) => {
+    if (error) {
+      console.error('Error occurred while retrieving the URL:', error);
+      res.status(500).json({ error: 'An error occurred while retrieving the URL' });
+    } else {
+      if (results.length === 0) {
+        res.status(404).json({ error: 'URL not found' });
+      } else {
+        const url = results[0].url;
+        res.json({ url: url });
+      }
+    }
+  });
+});
 
 
 

@@ -196,22 +196,50 @@ function showUserInfo() {
     });
 }
 
+// Function to handle the "Show QR Code" button click event
+function showQRCode() {
+  var hashedLink = document.getElementById('qrCode').value;
 
+  // Create a request body object
+  var requestBody = {
+    hashedLink: hashedLink
+  };
+
+  // Send a POST request to the server-side endpoint to retrieve the URL for the hashed link
+  fetch('/api/retrieve-url', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  })
+    .then(response => response.json())
+    .then(data => {
+      // Handle the response from the server
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        // Display the QR code using the retrieved URL
+        var url = data.url;
+        displayQRCode(url);
+      }
+    })
+    .catch(error => {
+      console.error('Error occurred while retrieving the URL:', error);
+    });
+}
 
 // Generate and display the QR code
-function displayQRCode(link) {
-  const qrCodeContainer = document.getElementById('qrcode-container');
+function displayQRCode(url) {
+  const qrCodeContainer = document.getElementById('qr-code-container');
   qrCodeContainer.innerHTML = ''; // Clear any previous QR code
 
-  // Generate the QR code using the link
-  qrcode.toCanvas(link, { errorCorrectionLevel: 'H', margin: 1 }, function (error, canvas) {
-    if (error) {
-      console.error('Error occurred while generating QR code:', error);
-    } else {
-      // Append the QR code canvas to the container
-      qrCodeContainer.appendChild(canvas);
-    }
-  });
+  // Generate the QR code using the URL
+  var qrCodeURL = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(url);
+  var img = document.createElement('img');
+  img.src = qrCodeURL;
+  qrCodeContainer.appendChild(img);
 }
+
 
 
