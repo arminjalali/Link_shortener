@@ -200,6 +200,9 @@ function showUserInfo() {
 function showQRCode() {
   var hashedLink = document.getElementById('qrCode').value;
 
+  // Get the JWT token from localStorage
+  var token = localStorage.getItem('token');
+
   // Create a request body object
   var requestBody = {
     hashedLink: hashedLink
@@ -209,7 +212,8 @@ function showQRCode() {
   fetch('/api/retrieve-url', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token // Include the JWT token in the request headers
     },
     body: JSON.stringify(requestBody)
   })
@@ -229,6 +233,7 @@ function showQRCode() {
     });
 }
 
+
 // Generate and display the QR code
 function displayQRCode(url) {
   const qrCodeContainer = document.getElementById('qr-code-container');
@@ -240,6 +245,5 @@ function displayQRCode(url) {
   img.src = qrCodeURL;
   qrCodeContainer.appendChild(img);
 }
-
 
 

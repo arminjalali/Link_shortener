@@ -71,7 +71,7 @@ connection.connect((err) => {
   });
 });
 
-const SECRET_KEY = 'your_secret_key';
+const SECRET_KEY = 'secret_key';
 
 // Generate a JWT token for a user
 function generateToken(user) {
@@ -294,17 +294,19 @@ app.post('/api/user-info', (req, res) => {
 });
 
 // Endpoint to retrieve the URL for a hashed link
-app.post('/api/retrieve-url', (req, res) => {
+app.post('/api/retrieve-url', authenticateToken, (req, res) => {
   const { hashedLink } = req.body;
+  const { username } = req.user;
 
-  // Retrieve the URL for the hashed link from the 'links' table
+  // Retrieve the URL for the hashed link associated with the logged-in user from the 'links' table
   const query = `
-    SELECT url
-    FROM links
-    WHERE short_hash = ?;
+    SELECT l.url
+    FROM links l
+    JOIN users u ON l.user_id = u.id
+    WHERE l.short_hash = ? AND u.username = ?;
   `;
 
-  connection.query(query, [hashedLink], (error, results) => {
+  connection.query(query, [hashedLink, username], (error, results) => {
     if (error) {
       console.error('Error occurred while retrieving the URL:', error);
       res.status(500).json({ error: 'An error occurred while retrieving the URL' });
@@ -318,6 +320,7 @@ app.post('/api/retrieve-url', (req, res) => {
     }
   });
 });
+
 
 
 
