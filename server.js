@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
+
 
 const app = express();
 app.use(express.json());
@@ -176,6 +178,7 @@ app.post('/api/shorten', authenticateToken, (req, res) => {
   // Generate a short hash for the URL (you can use any shortening algorithm of your choice)
   const shortHash = generateShortHash(url);
 
+  
   // Save the shortened link, creation date, and number of views in the database
   const insertLinkQuery = 'INSERT INTO links (url, short_hash, views, created_at, user_id) VALUES (?, ?, ?, ?, ?)';
   const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' '); // Get the current date and time in the format 'YYYY-MM-DD HH:MM:SS'
@@ -241,6 +244,56 @@ app.get('/api/redirect/:hashedLink', (req, res) => {
     });
   });
 });
+
+
+// Endpoint to retrieve user information and associated links
+app.post('/api/user-info', (req, res) => {
+  const { username } = req.body;
+
+  // Retrieve user information and associated links from 'users' and 'links' tables
+  const query = `
+    SELECT u.*, l.*
+    FROM users u
+    LEFT JOIN links l ON u.username = l.user_id
+    WHERE u.username = ?;
+  `;
+
+  connection.query(query, [username], (error, results) => {
+    if (error) {
+      console.error('Error occurred while retrieving user information:', error);
+      res.status(500).json({ error: 'An error occurred while retrieving user information' });
+    } else {
+      if (results.length === 0) {
+        res.status(404).json({ error: 'User not found' });
+      } else {
+        const user = {
+          username: results[0].username,
+          email: results[0].email,
+          password: results[0].password,
+          created_at: results[0].created_at,
+          updated_at: results[0].updated_at,
+          links: []
+        };
+
+        results.forEach(row => {
+          if (row.url) {
+            const link = {
+              url: row.url,
+              short_hash: row.short_hash,
+              views: row.views,
+              created_at: row.created_at
+            };
+            user.links.push(link);
+          }
+        });
+
+        res.json(user);
+      }
+    }
+  });
+});
+
+
 
 
 app.listen(3000, () => {

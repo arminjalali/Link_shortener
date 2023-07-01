@@ -120,6 +120,8 @@ function shortenUrl() {
       } else {
         // Display the shortened link
         document.getElementById('shorten-message').innerHTML = 'Shortened Link: ' + data.shortenedLink;
+        // Display the QR code for the original link
+        displayQRCode(data.originalLink);
       }
     })
     .catch(error => {
@@ -144,6 +146,72 @@ function redirect() {
     .catch(error => {
       console.error('Error occurred during redirection:', error);
     });
+}
+
+// Function to handle the "Show" button click event
+function showUserInfo() {
+  var username = document.getElementById('username').value;
+
+  // Create a request body object
+  var requestBody = {
+    username: username
+  };
+
+  // Send a POST request to the server-side endpoint to retrieve user information
+  fetch('/api/user-info', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  })
+    .then(response => response.json())
+    .then(data => {
+      // Handle the response from the server
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        // Display the user information and associated links
+        var userInfo = 'User Information:\n\n' +
+          'Username: ' + data.username + '\n' +
+          'Email: ' + data.email + '\n' +
+          'Password: ' + data.password + '\n' +
+          'Created At: ' + data.created_at + '\n' +
+          'Updated At: ' + data.updated_at + '\n\n';
+
+        var linksInfo = 'Links:\n\n';
+        data.links.forEach(function (link) {
+          linksInfo += 'URL: ' + link.url + '\n' +
+            'Short Hash: ' + link.short_hash + '\n' +
+            'Views: ' + link.views + '\n' +
+            'Created At: ' + link.created_at + '\n\n';
+        });
+
+        var userInfoText = document.getElementById('user-info-text');
+        userInfoText.textContent = userInfo + linksInfo;
+      }
+    })
+    .catch(error => {
+      console.error('Error occurred while retrieving user information:', error);
+    });
+}
+
+
+
+// Generate and display the QR code
+function displayQRCode(link) {
+  const qrCodeContainer = document.getElementById('qrcode-container');
+  qrCodeContainer.innerHTML = ''; // Clear any previous QR code
+
+  // Generate the QR code using the link
+  qrcode.toCanvas(link, { errorCorrectionLevel: 'H', margin: 1 }, function (error, canvas) {
+    if (error) {
+      console.error('Error occurred while generating QR code:', error);
+    } else {
+      // Append the QR code canvas to the container
+      qrCodeContainer.appendChild(canvas);
+    }
+  });
 }
 
 

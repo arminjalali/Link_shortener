@@ -11,8 +11,14 @@
   <button onclick="shortenUrl()">Shorten</button>
   <p id="shorten-message"></p>
 
-  <h3>Redirect to Original Link</h3>
-  <input type="text" id="hashed-link" placeholder="Enter hashed link">
-  <button onclick="redirect()">Redirect</button>
+   <!-- User Information -->
+   <h2>User Information</h2>
+   <input type="text" id="username" placeholder="Enter username">
+   <button onclick="showUserInfo()">Show</button>
+   <div id="user-info"></div>
+   <pre id="user-info-text"></pre>
+
+
+  <div id="qrcode-container"></div>
 </body>
 </html>
