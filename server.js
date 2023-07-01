@@ -247,15 +247,15 @@ app.get('/api/redirect/:hashedLink', (req, res) => {
 
 
 // Endpoint to retrieve user information and associated links
-app.post('/api/user-info', (req, res) => {
-  const { username } = req.body;
+app.get('/api/user-info', authenticateToken, (req, res) => {
+  const { username } = req.user;
 
   // Retrieve user information and associated links from 'users' and 'links' tables
   const query = `
-  SELECT u.*, l.url, l.short_hash, l.views, l.created_at AS link_created_at
-  FROM users u
-  INNER JOIN links l ON u.id = l.user_id
-  WHERE u.username = ?;
+    SELECT u.*, l.url, l.short_hash, l.views, l.created_at AS link_created_at
+    FROM users u
+    LEFT JOIN links l ON u.id = l.user_id
+    WHERE u.username = ?;
   `;
 
   connection.query(query, [username], (error, results) => {
@@ -281,7 +281,7 @@ app.post('/api/user-info', (req, res) => {
               url: row.url,
               short_hash: row.short_hash,
               views: row.views,
-              created_at: row.created_at
+              created_at: row.link_created_at
             };
             user.links.push(link);
           }

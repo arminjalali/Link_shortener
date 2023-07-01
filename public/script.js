@@ -148,22 +148,20 @@ function redirect() {
     });
 }
 
-// Function to handle the "Show" button click event
 function showUserInfo() {
-  var username = document.getElementById('username').value;
+  // Retrieve the JWT token from the browser's localStorage
+  var token = localStorage.getItem('token');
 
-  // Create a request body object
-  var requestBody = {
-    username: username
+  // Create the request headers with the JWT token
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + token
   };
 
-  // Send a POST request to the server-side endpoint to retrieve user information
+  // Send a GET request to the server-side endpoint with the JWT token
   fetch('/api/user-info', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
+    method: 'GET',
+    headers: headers
   })
     .then(response => response.json())
     .then(data => {
@@ -195,6 +193,7 @@ function showUserInfo() {
       console.error('Error occurred while retrieving user information:', error);
     });
 }
+
 
 // Function to handle the "Show QR Code" button click event
 function showQRCode() {
