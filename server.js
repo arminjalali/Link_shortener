@@ -252,10 +252,10 @@ app.post('/api/user-info', (req, res) => {
 
   // Retrieve user information and associated links from 'users' and 'links' tables
   const query = `
-    SELECT u.*, l.*
-    FROM users u
-    LEFT JOIN links l ON u.username = l.user_id
-    WHERE u.username = ?;
+  SELECT u.*, l.url, l.short_hash, l.views, l.created_at AS link_created_at
+  FROM users u
+  INNER JOIN links l ON u.id = l.user_id
+  WHERE u.username = ?;
   `;
 
   connection.query(query, [username], (error, results) => {
